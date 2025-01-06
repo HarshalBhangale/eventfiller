@@ -1,4 +1,4 @@
-const { Builder, By, Key } = require('selenium-webdriver');
+const { Builder, By, until } = require('selenium-webdriver');
 
 const automateLumaForm = async (link, userData) => {
   const driver = await new Builder().forBrowser('chrome').build();
@@ -7,6 +7,16 @@ const automateLumaForm = async (link, userData) => {
     // Navigate to the Luma event page
     await driver.get(link);
 
+    // Wait for the "Request to Join" button to appear and click it
+    const requestToJoinButton = await driver.wait(
+      until.elementLocated(By.xpath("//button[contains(@class, 'luma-button') and contains(@class, 'primary')]")),
+      10000 // Wait up to 10 seconds
+    );
+    await requestToJoinButton.click();
+
+    // Wait for the form to load
+    await driver.wait(until.elementLocated(By.name('name')), 10000);
+
     // Fill out the form fields
     if (userData.name) {
       await driver.findElement(By.name('name')).sendKeys(userData.name);
@@ -14,15 +24,20 @@ const automateLumaForm = async (link, userData) => {
     if (userData.email) {
       await driver.findElement(By.name('email')).sendKeys(userData.email);
     }
-    if (userData.phone) {
-      await driver.findElement(By.name('phone')).sendKeys(userData.phone);
-    }
 
+    // Update phone field logic
+    const phoneField = await driver.wait(
+      until.elementLocated(By.xpath("//input[contains(@placeholder, 'Phone') or @type='tel']")),
+      10000 // Wait for phone field
+    );
+    await phoneField.sendKeys(userData.phone);
+
+    // Submit the form
     // Submit the form
     const submitButton = await driver.findElement(By.css('button[type="submit"]'));
     await submitButton.click();
 
-    // Wait for confirmation (adjust time as needed)
+    // Wait for confirmation (if any)
     await driver.sleep(5000);
 
     return 'Form submitted successfully';
